@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package einride.evrp.v1;
+
+import "einride/evrp/v1/problem.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/thomaybalazs/evrp-orchestrator/gen/einride/evrp/v1;evrpv1";
+
+// A stop in a vehicle's route.
+message Stop {
+  // Type of the stop.
+  StopType stop_type = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Location of the stop.
+  Location location = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Shipment ID if this is a pickup or delivery stop.
+  string shipment_id = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Charger ID if this is a charging stop.
+  string charger_id = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Planned arrival time.
+  google.protobuf.Timestamp arrival_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Planned departure time.
+  google.protobuf.Timestamp departure_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Battery charge level on arrival in kWh.
+  double charge_on_arrival_kwh = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Battery charge level on departure in kWh.
+  double charge_on_departure_kwh = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Current payload weight on departure in kg.
+  double payload_on_departure_kg = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Type of a route stop.
+  enum StopType {
+    // Default value.
+    STOP_TYPE_UNSPECIFIED = 0;
+    // Vehicle depot (start/end).
+    STOP_TYPE_DEPOT = 1;
+    // Shipment pickup.
+    STOP_TYPE_PICKUP = 2;
+    // Shipment delivery.
+    STOP_TYPE_DELIVERY = 3;
+    // Charging station.
+    STOP_TYPE_CHARGING = 4;
+  }
+}
+
+// A route assigned to a vehicle.
+message Route {
+  // Vehicle ID for this route.
+  string vehicle_id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Ordered sequence of stops.
+  repeated Stop stops = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Total distance in kilometers.
+  double total_distance_km = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Total duration in seconds.
+  int64 total_duration_seconds = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Total energy consumed in kWh.
+  double total_energy_kwh = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A solution to an eVRP problem.
+message Solution {
+  option (google.api.resource) = {
+    type: "evrp.einride.tech/Solution"
+    pattern: "problems/{problem}/solution"
+    singular: "solution"
+    plural: "solutions"
+  };
+
+  // Resource name of the solution.
+  // Format: problems/{problem}/solution
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Routes assigned to vehicles.
+  repeated Route routes = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Total distance across all routes in kilometers.
+  double total_distance_km = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Total duration across all routes in seconds.
+  int64 total_duration_seconds = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Number of shipments successfully assigned.
+  int32 shipments_assigned = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Number of shipments that could not be assigned.
+  int32 shipments_unassigned = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

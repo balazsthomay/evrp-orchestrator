@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+package einride.evrp.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/thomaybalazs/evrp-orchestrator/gen/einride/evrp/v1;evrpv1";
+
+// A location in the eVRP problem.
+message Location {
+  // Latitude in degrees.
+  double latitude = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Longitude in degrees.
+  double longitude = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Human-readable address.
+  string address = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// A time window constraint.
+message TimeWindow {
+  // Earliest allowed time.
+  google.protobuf.Timestamp start_time = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Latest allowed time.
+  google.protobuf.Timestamp end_time = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// A shipment to be delivered.
+message Shipment {
+  // Unique identifier for the shipment within the problem.
+  string shipment_id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).string.min_len = 1
+  ];
+
+  // Pickup location.
+  Location pickup_location = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Delivery location.
+  Location delivery_location = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Weight in kilograms.
+  double weight_kg = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).double.gt = 0
+  ];
+
+  // Delivery time window.
+  TimeWindow delivery_window = 5 [(google.api.field_behavior) = REQUIRED];
+
+  // Service time at delivery in seconds.
+  int32 service_time_seconds = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// An electric vehicle available for routing.
+message Vehicle {
+  // Unique identifier for the vehicle within the problem.
+  string vehicle_id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).string.min_len = 1
+  ];
+
+  // Battery capacity in kWh.
+  double battery_capacity_kwh = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).double.gt = 0
+  ];
+
+  // Current battery charge in kWh.
+  double current_charge_kwh = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Energy consumption rate in kWh per kilometer.
+  double energy_consumption_rate = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).double.gt = 0
+  ];
+
+  // Maximum payload capacity in kilograms.
+  double max_payload_kg = 5 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).double.gt = 0
+  ];
+
+  // Depot location where the vehicle starts and ends.
+  Location depot_location = 6 [(google.api.field_behavior) = REQUIRED];
+
+  // Average speed in km/h for travel time estimation.
+  double speed_kmh = 7 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// A charging station.
+message Charger {
+  // Unique identifier for the charger within the problem.
+  string charger_id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).string.min_len = 1
+  ];
+
+  // Charger location.
+  Location location = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Number of available charging slots.
+  int32 num_slots = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).int32.gt = 0
+  ];
+
+  // Charging power output in kW.
+  double power_kw = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).double.gt = 0
+  ];
+
+  // Availability windows for the charger.
+  repeated TimeWindow availability_windows = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// An eVRP problem definition.
+message Problem {
+  option (google.api.resource) = {
+    type: "evrp.einride.tech/Problem"
+    pattern: "problems/{problem}"
+    singular: "problem"
+    plural: "problems"
+  };
+
+  // Resource name of the problem.
+  // Format: problems/{problem}
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Display name for the problem.
+  string display_name = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Shipments to be delivered.
+  repeated Shipment shipments = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).repeated.min_items = 1
+  ];
+
+  // Available electric vehicles.
+  repeated Vehicle vehicles = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).repeated.min_items = 1
+  ];
+
+  // Available charging stations.
+  repeated Charger chargers = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Global start time for the planning horizon.
+  google.protobuf.Timestamp start_time = 6 [(google.api.field_behavior) = REQUIRED];
+
+  // Global end time for the planning horizon.
+  google.protobuf.Timestamp end_time = 7 [(google.api.field_behavior) = REQUIRED];
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The state of the problem.
+  State state = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // State of a problem in its lifecycle.
+  enum State {
+    // Default value.
+    STATE_UNSPECIFIED = 0;
+    // Problem has been submitted and is being solved.
+    STATE_SOLVING = 1;
+    // Problem has been solved successfully.
+    STATE_SOLVED = 2;
+    // Problem solving failed.
+    STATE_FAILED = 3;
+  }
+}

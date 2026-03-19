@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package einride.evrp.v1;
+
+import "einride/evrp/v1/problem.proto";
+import "einride/evrp/v1/solution.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/longrunning/operations.proto";
+import "google/protobuf/duration.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/thomaybalazs/evrp-orchestrator/gen/einride/evrp/v1;evrpv1";
+
+// Service for managing eVRP problems and solutions.
+service EVRPService {
+  // Creates a new eVRP problem and starts solving it.
+  // The returned operation will resolve to a Solution when complete.
+  rpc CreateProblem(CreateProblemRequest) returns (google.longrunning.Operation) {
+    option (google.api.method_signature) = "problem";
+    option (google.longrunning.operation_info) = {
+      response_type: "einride.evrp.v1.Solution"
+      metadata_type: "einride.evrp.v1.SolveMetadata"
+    };
+  }
+
+  // Gets an eVRP problem.
+  rpc GetProblem(GetProblemRequest) returns (Problem) {
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists eVRP problems.
+  rpc ListProblems(ListProblemsRequest) returns (ListProblemsResponse);
+
+  // Gets a solution for an eVRP problem.
+  rpc GetSolution(GetSolutionRequest) returns (Solution) {
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Metadata for a solve operation.
+message SolveMetadata {
+  // Current progress percentage (0-100).
+  int32 progress_percentage = 1;
+}
+
+// Request message for CreateProblem.
+message CreateProblemRequest {
+  // The problem to create.
+  Problem problem = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).required = true
+  ];
+
+  // Maximum time to spend solving.
+  google.protobuf.Duration solve_duration = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for GetProblem.
+message GetProblemRequest {
+  // Resource name of the problem to retrieve.
+  // Format: problems/{problem}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "evrp.einride.tech/Problem",
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+// Request message for ListProblems.
+message ListProblemsRequest {
+  // Maximum number of problems to return.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token for pagination.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for ListProblems.
+message ListProblemsResponse {
+  // The list of problems.
+  repeated Problem problems = 1;
+
+  // Token for the next page.
+  string next_page_token = 2;
+}
+
+// Request message for GetSolution.
+message GetSolutionRequest {
+  // Resource name of the solution to retrieve.
+  // Format: problems/{problem}/solution
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "evrp.einride.tech/Solution",
+    (buf.validate.field).string.min_len = 1
+  ];
+}

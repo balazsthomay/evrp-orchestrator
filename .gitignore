@@ -1,0 +1,22 @@
+# Go
+bin/
+coverage.out
+
+# Python (legacy)
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv
+
+# Project
+SPEC.md
+CLAUDE.md
+.claude/
+.env
+.coverage
+.superset
+.python-version
+pyproject.toml
