@@ -40,9 +40,7 @@ func setupServer(t *testing.T) (evrpv1.EVRPServiceClient, longrunningpb.Operatio
 	longrunningpb.RegisterOperationsServer(grpcServer, srv)
 
 	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
-			// Server stopped.
-		}
+		_ = grpcServer.Serve(lis)
 	}()
 
 	conn, err := grpc.NewClient(
